@@ -54,7 +54,29 @@ class MyClient(discord.Client):
             total_weightage += weightage_i
         if total_weightage < 100:
             return await message.reply("Weightage does not add up to 100. Please try again")
-        calculate_optimized_grades()
+        await message.reply("Reply with your goal grade: ")
+
+        is_valid = lambda x: x.author == message.author and x.content.isdigit()
+
+        try:
+            goal_grade = await self.wait_for('message', check=is_valid, timeout=10.0)
+        except asyncio.TimeoutError:
+            return await message.reply("You took too long to respond. Try again")
+
+        optimized_grades = calculate_optimized_grades(grade_data, goal_grade)
+
+        if not optimized_grades.success:
+            goal_grade.reply()
+        result_msg = "Items with * are predicted grades"
+        count = 0
+        for i in grade_data:
+            if i[1] == 'x':
+                result_msg += f"{i[2]} ({i[0]*100})*: {optimized_grades[count]}\n"
+                count += 1
+            else:
+                result_msg += f"{i[2]} ({i[0]*100}): {i[1]}\n"
+
+
 
     async def on_message(self, message):
         if message.author == self.user:
