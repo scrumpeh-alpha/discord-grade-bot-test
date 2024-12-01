@@ -1,1 +1,4 @@
 
+[submodule "grade_optimizer"]
+	path = grade_optimizer
+	url = https://github.com/scrumpeh-alpha/grade-optimizer.git
