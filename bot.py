@@ -32,25 +32,31 @@ class MyClient(discord.Client):
         await guess.reply("Correct Answer!")
 
     async def grade_calculator(self, message):
-        message_data = [i.split(',') for i in message.strip('\n')[1:]]
+        message_data = [i.split(',') for i in message.content.split('\n')[1:]]
         total_weightage = 0
         grade_data = []
         for i in range(len(message_data)):
             try:
                 weightage_i = float(message_data[i][0])
-                grade_i = float(message_data[i][1])
-                if (weightage_i < 0 or grade_i < 0):
-                    return await message.reply("Weightage or grade cannot be negative!")
-            except ValueError:
+                grade_i = message_data[i][1]
+                if grade_i != 'x':
+                    grade_i = float(grade_i)
+                    if (grade_i < 0):
+                        return await message.reply("Grade cannot be negative!")
+                if (weightage_i < 0):
+                    return await message.reply("Weightage cannot be negative!")
+            except ValueError as ve:
+                print(ve)
                 return await message.reply("Invalid input. Please try again")
-            except Exception:
+            except Exception as e:
+                print(e)
                 return await message.reply("Something went wrong. Please try again")
 
             if len(message_data[i]) == 2:
-                grade_data.append(weightage_i, grade_i)
+                grade_data.append([weightage_i, grade_i])
             if len(message_data[i]) == 3:
                 label = message_data[i][2]
-                grade_data.append(weightage_i, grade_i, label)
+                grade_data.append([weightage_i, grade_i, label])
             total_weightage += weightage_i
         if total_weightage < 100:
             return await message.reply("Weightage does not add up to 100. Please try again")
@@ -59,14 +65,24 @@ class MyClient(discord.Client):
         is_valid = lambda x: x.author == message.author and x.content.isdigit()
 
         try:
-            goal_grade = await self.wait_for('message', check=is_valid, timeout=10.0)
+            goal_grade_msg = await self.wait_for('message', check=is_valid, timeout=10.0)
         except asyncio.TimeoutError:
             return await message.reply("You took too long to respond. Try again")
 
+        goal_grade = goal_grade_msg.content
         optimized_grades = calculate_optimized_grades(grade_data, goal_grade)
 
         if not optimized_grades.success:
-            goal_grade.reply()
+            result_msg = "This is the maximum grade you can get: "
+            max_grade = 0
+            for i in grade_data:
+                if i[1] == 'x':
+                    max_grade += 100*i[0]
+                else:
+                    max_grade += i[0]*[1]
+            result_msg += max_grade
+            return await goal_grade_msg.reply(result_msg)
+
         result_msg = "Items with * are predicted grades"
         count = 0
         for i in grade_data:
@@ -75,8 +91,7 @@ class MyClient(discord.Client):
                 count += 1
             else:
                 result_msg += f"{i[2]} ({i[0]*100}): {i[1]}\n"
-
-
+        await goal_grade.reply(result_msg)
 
     async def on_message(self, message):
         if message.author == self.user:
