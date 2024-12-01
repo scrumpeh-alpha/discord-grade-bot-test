@@ -63,6 +63,7 @@ class MyClient(discord.Client):
         await message.reply("Reply with your goal grade: ")
 
         is_valid = lambda x: x.author == message.author and x.content.isdigit()
+        round_if_float = lambda x: int(x) if x%1 == 0 else round(x,2)
 
         try:
             goal_grade_msg = await self.wait_for('message', check=is_valid, timeout=10.0)
@@ -90,15 +91,18 @@ class MyClient(discord.Client):
             result_msg += f"(min\\max): {min_grade}\\{max_grade}"
             return await goal_grade_msg.reply(result_msg)
         else:
-            result_msg = "Items with * are predicted grades"
+            result_msg = "Items with * are predicted grades: \n"
             count = 0
             for i in grade_data:
+                weightage_percentage_display = round_if_float(i[0]*100)
                 if i[1] == 'x':
-                    result_msg += f"{i[2]} ({i[0]*100})*: {optimized_grades[count]}\n"
+                    grade_display = round_if_float(optimized_grades.x[count])
+                    # result_msg += f"{i[2]} ({weightage_percentage_display}%)*: {grade_display}\n"
                     count += 1
                 else:
-                    result_msg += f"{i[2]} ({i[0]*100}): {i[1]}\n"
-            await goal_grade.reply(result_msg)
+                    grade_display = round_if_float(i[1])
+                result_msg += f"{i[2]} ({weightage_percentage_display}%): {grade_display}\n"
+            await goal_grade_msg.reply(result_msg)
 
     async def on_message(self, message):
         if message.author == self.user:
