@@ -37,7 +37,7 @@ class MyClient(discord.Client):
         grade_data = []
         for i in range(len(message_data)):
             try:
-                weightage_i = float(message_data[i][0])
+                weightage_i = float(message_data[i][0])/100
                 grade_i = message_data[i][1]
                 if grade_i != 'x':
                     grade_i = float(grade_i)
@@ -53,11 +53,11 @@ class MyClient(discord.Client):
                 return await message.reply("Something went wrong. Please try again")
 
             if len(message_data[i]) == 2:
-                grade_data.append([weightage_i, grade_i])
+                grade_data.append([weightage_i, grade_i, f"Item {i+1}"])
             if len(message_data[i]) == 3:
                 label = message_data[i][2]
                 grade_data.append([weightage_i, grade_i, label])
-            total_weightage += weightage_i
+            total_weightage += weightage_i*100
         if total_weightage < 100:
             return await message.reply("Weightage does not add up to 100. Please try again")
         await message.reply("Reply with your goal grade: ")
@@ -69,29 +69,36 @@ class MyClient(discord.Client):
         except asyncio.TimeoutError:
             return await message.reply("You took too long to respond. Try again")
 
-        goal_grade = goal_grade_msg.content
+        try:
+            goal_grade = float(goal_grade_msg.content)
+        except ValueError as ve:
+            print(ve)
+            return await goal_grade_msg.reply("Enter a valid integer")
         optimized_grades = calculate_optimized_grades(grade_data, goal_grade)
 
         if not optimized_grades.success:
-            result_msg = "This is the maximum grade you can get: "
+            print(f"{grade_data=}")
+            result_msg = "This is the maximum and minimum grade you can get: \n"
             max_grade = 0
+            min_grade = 0
             for i in grade_data:
                 if i[1] == 'x':
-                    max_grade += 100*i[0]
+                    max_grade += i[0]*100
                 else:
-                    max_grade += i[0]*[1]
-            result_msg += max_grade
+                    max_grade += i[0]*i[1]
+                    min_grade += i[0]*i[1]
+            result_msg += f"(min\\max): {min_grade}\\{max_grade}"
             return await goal_grade_msg.reply(result_msg)
-
-        result_msg = "Items with * are predicted grades"
-        count = 0
-        for i in grade_data:
-            if i[1] == 'x':
-                result_msg += f"{i[2]} ({i[0]*100})*: {optimized_grades[count]}\n"
-                count += 1
-            else:
-                result_msg += f"{i[2]} ({i[0]*100}): {i[1]}\n"
-        await goal_grade.reply(result_msg)
+        else:
+            result_msg = "Items with * are predicted grades"
+            count = 0
+            for i in grade_data:
+                if i[1] == 'x':
+                    result_msg += f"{i[2]} ({i[0]*100})*: {optimized_grades[count]}\n"
+                    count += 1
+                else:
+                    result_msg += f"{i[2]} ({i[0]*100}): {i[1]}\n"
+            await goal_grade.reply(result_msg)
 
     async def on_message(self, message):
         if message.author == self.user:
