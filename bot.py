@@ -54,8 +54,7 @@ class MyClient(discord.Client):
             total_weightage += weightage_i
         if total_weightage < 100:
             return await message.reply("Weightage does not add up to 100. Please try again")
-        calculate_optimized_grades() 
-
+        calculate_optimized_grades()
 
     async def on_message(self, message):
         if message.author == self.user:
