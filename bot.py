@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import random
 import logging
 import asyncio
+from grade_optimizer.grade_optimizer import calculate_optimized_grades
 
 class MyClient(discord.Client):
     async def on_ready(self):
@@ -30,6 +31,32 @@ class MyClient(discord.Client):
 
         await guess.reply("Correct Answer!")
 
+    async def grade_calculator(self, message):
+        message_data = [i.split(',') for i in message.strip('\n')[1:]]
+        total_weightage = 0
+        grade_data = []
+        for i in range(len(message_data)):
+            try:
+                weightage_i = float(message_data[i][0])
+                grade_i = float(message_data[i][1])
+                if (weightage_i < 0 or grade_i < 0):
+                    return await message.reply("Weightage or grade cannot be negative!")
+            except ValueError:
+                return await message.reply("Invalid input. Please try again")
+            except Exception:
+                return await message.reply("Something went wrong. Please try again")
+
+            if len(message_data[i]) == 2:
+                grade_data.append(weightage_i, grade_i)
+            if len(message_data[i]) == 3:
+                label = message_data[i][2]
+                grade_data.append(weightage_i, grade_i, label)
+            total_weightage += weightage_i
+        if total_weightage < 100:
+            return await message.reply("Weightage does not add up to 100. Please try again")
+        calculate_optimized_grades() 
+
+
     async def on_message(self, message):
         if message.author == self.user:
             return
@@ -40,11 +67,13 @@ class MyClient(discord.Client):
             await message.reply("Random game started. Pick a number between 1-10")
             await self.random_number_game(message)
         if message.content.startswith('$gradeCalculate'):
-            await message.reply("""Input your grades in the following format:
-            [Weightage1],[Grade1],[Label1:optional]
-            [Weightage2],[Grade2],[Label2:optional]
-            """)
-            await self.grade_calculator(message)
+            if message.content.strip() == "$gradeCalculate":
+                await message.reply("""Input your grades in the following format:
+                [Weightage1],[Grade1],[Label1:optional]
+                [Weightage2],[Grade2],[Label2:optional]
+                    """)
+            else:
+                await self.grade_calculator(message)
 
 
 load_dotenv()
