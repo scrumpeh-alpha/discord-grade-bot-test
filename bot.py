@@ -185,10 +185,6 @@ async def grade_optimize(ctx, opts: str):
         [Weightage1],[Grade1],[Label1:optional]
         [Weightage2],[Grade2],[Label2:optional]
         """, inline=False)
-    # await message.reply("""Input your grades in the following format:
-    # [Weightage1],[Grade1],[Label1:optional]
-    # [Weightage2],[Grade2],[Label2:optional]
-    #     """)
         await ctx.reply(embed=embedVar)
     else:
         await grade_calculator(ctx)
