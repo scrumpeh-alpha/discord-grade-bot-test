@@ -107,7 +107,7 @@ async def grade_calculator(ctx: commands.Context):
     user_inputs = await get_inputs_from_user(ctx, message_data)
     # if return type is a discord message, that means it must be an error
     # TODO: Come up with better way
-    if type(user_inputs) == discord.Message:
+    if isinstance(user_inputs, discord.Message):
         return
     grade_data, goal_grade_msg = user_inputs
 
@@ -141,7 +141,7 @@ async def grade_calculator(ctx: commands.Context):
         result_msg = "```ansi\n"
         count = 0
         # Justify-length for output according to the label with biggest size
-        justify_length = max([len(i[2]) for i in grade_data]) + 14      # Extra spacing
+        justify_length = max([len(i[2]) for i in grade_data]) + 16      # Extra spacing
         for i in grade_data:
             weightage_percentage_display = round_if_float(i[0]*100)
             if i[1] == 'x':
@@ -177,14 +177,15 @@ async def random_start(ctx):
     await random_number_game(ctx)
 
 @bot.command(name="gradeOpt")
-async def grade_optimize(ctx, opts: str):
-    if opts == 'help':
+async def grade_optimize(ctx, opts: str=None):
+    if opts==None or opts == 'help':
         embedVar = discord.Embed(title="Grade Optimizer", description="This bot optimizes your grades.", color=0x00bbff)
         embedVar.set_author(name=ctx.author.name, icon_url=ctx.author.display_avatar.url)
         embedVar.add_field(name="Input Format", value="""Input your grades in the following format:
-        [Weightage1],[Grade1],[Label1:optional]
-        [Weightage2],[Grade2],[Label2:optional]
-        """, inline=False)
+        ```
+$gradeOpt
+[Weightage1],[Grade1],[Label1:optional]
+[Weightage2],[Grade2],[Label2:optional]    ```""", inline=False)
         await ctx.reply(embed=embedVar)
     else:
         await grade_calculator(ctx)
